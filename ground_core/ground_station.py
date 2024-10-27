@@ -10,10 +10,12 @@ separate judges server at 1hz. We can add callbacks to run based off the message
 
 class GroundStation(Logger):
 
-    def __init__(self, TD_IP, TD_port) -> None:
+    def __init__(self, TD_IP, TD_port, *, debug=False) -> None:
         super().__init__("GroundStation")
         self.boat_client = Client("192.168.3.2", callback=self._boat_callback)
-        self.TD_client = Client(TD_IP, port=TD_port)
+        self.boat_client.start()
+        if not debug:
+            self.TD_client = Client(TD_IP, port=TD_port)
 
         self.mission_heartbeat = None
         self.system_heartbeat = None
@@ -22,10 +24,19 @@ class GroundStation(Logger):
         self.active = True
         self.send_thread = Thread(target=self._send_heartbeat)
         self.send_lock = Lock()
-        self.send_thread.start()
+        if not debug:
+            self.TD_client.start()
+            self.send_thread.start()
 
     def add_callback(self, msg_id, callback):
         self.callback_list[msg_id] = callback
+
+    def __del__(self):
+        self.active = False
+        self.send_thread.join()
+        self.boat_client.stop()
+        if not self.debug:
+            self.TD_client.stop()
 
     @staticmethod
     def _get_msg_id(msg : str) -> str:
@@ -34,18 +45,21 @@ class GroundStation(Logger):
     def _send_heartbeat(self):
         while self.active:
             with self.send_lock:
-                self.TD_client.send(self.mission_heartbeat)
-                self.TD_client.send(self.system_heartbeat)
-                self.mission_heartbeat = None
-                self.system_heartbeat = None
+                if self.mission_heartbeat is not None:
+                    self.TD_client.send(self.mission_heartbeat)
+                    self.mission_heartbeat = None
+
+                if self.system_heartbeat is not None:
+                    self.TD_client.send(self.system_heartbeat)
+                    self.system_heartbeat = None
             time.sleep(1)
 
     def _boat_callback(self, msg : str, address : Tuple[str, int]):
         data = csm.decode(msg)
         if data is None:
             return
-        mission_heartbeat = data["mission"]
-        system_heartbeat = data["system"]
+        mission_heartbeat = data.get("mission")
+        system_heartbeat = data.get("system")
         if mission_heartbeat is not None:
             if GroundStation._validate_checksum(mission_heartbeat):
                 with self.send_lock:
@@ -68,9 +82,10 @@ class GroundStation(Logger):
     @staticmethod
     def _validate_checksum(msg : str) -> bool:
         msg = msg.strip()
-        # Remove the checksum (last 2 characters)
-        og_checksum = msg[-2:]
-        msg = msg[1:-3] # remove dollar sign, then, checksum and asterisk
+        # Remove the checksum (characters after the asterisk)
+        cs_pos = msg.rfind("*")
+        og_checksum = msg[cs_pos + 1:]
+        msg = msg[1:cs_pos] # remove dollar sign, then, checksum and asterisk
         checksum = 0
         for char in msg:
             checksum ^= ord(char)
