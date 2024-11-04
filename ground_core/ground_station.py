@@ -2,6 +2,7 @@ import time
 from typing import Tuple
 from threading import Thread, Lock
 from comms_core import Client, Logger, CustomSocketMessage as csm
+from .heartbeat import SystemHeartbeat, MissionHeartbeat
 
 '''
 A pretty simple class that receives a heartbeat from the server, stores it, and then sends it to a 
@@ -10,10 +11,12 @@ separate judges server at 1hz. We can add callbacks to run based off the message
 
 class GroundStation(Logger):
 
-    def __init__(self, TD_IP, TD_port, *, debug=False) -> None:
+    def __init__(self, TD_IP, TD_port, *, debug=False, dummy=False) -> None:
         super().__init__("GroundStation")
-        self.boat_client = Client("192.168.3.2", callback=self._boat_callback)
-        self.boat_client.start()
+        self.dummy = dummy
+        if not dummy:
+            self.boat_client = Client("192.168.3.2", callback=self._boat_callback)
+            self.boat_client.start()
         if not debug:
             self.TD_client = Client(TD_IP, port=TD_port)
 
@@ -27,6 +30,7 @@ class GroundStation(Logger):
         if not debug:
             self.TD_client.start()
             self.send_thread.start()
+        
 
     def add_callback(self, msg_id, callback):
         self.callback_list[msg_id] = callback
@@ -45,6 +49,10 @@ class GroundStation(Logger):
     def _send_heartbeat(self):
         while self.active:
             with self.send_lock:
+                if self.dummy:
+                    self.mission_heartbeat = str(MissionHeartbeat(["RXCOD", "RBG"]))
+                    self.system_heartbeat = str(SystemHeartbeat((42.0, -71.0), "1"))
+
                 if self.mission_heartbeat is not None:
                     self.TD_client.send(self.mission_heartbeat)
                     self.mission_heartbeat = None
