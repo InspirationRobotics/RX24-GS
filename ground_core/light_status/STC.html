@@ -90,7 +90,7 @@
     
     <h1>Detected Pattern:</h1>
 
-    <!-- Display the counter -->
+    <!-- Display the counter
     <div class="counter-box">
         Number of votes for current pattern: {{ counter }}    
         <break>
@@ -99,7 +99,7 @@
         </break>
 
         Number of frames analyzed: {{ frames }}
-    </div>
+    </div> -->
 
     <!-- Flex container for color boxes with labels -->
     <div class="color-container">
@@ -107,16 +107,16 @@
             <div>
                 <!-- Color label above each color box -->
                 <div class="color-label">
-                    {% if color == 'N' %}
+                    {% if color == '#000000' %}
                         None
-                    {% elif color == 'R' %}
+                    {% elif color == '#FF0000' %}
                         Red
-                    {% elif color == 'G' %}
+                    {% elif color == '#00FF00' %}
                         Green
-                    {% elif color == 'B' %}
+                    {% elif color == '#0000FF' %}
                         Blue
                     {% else %}
-                        None
+                        {{ color }}
                     {% endif %}
                 </div>
                 <!-- Color box -->

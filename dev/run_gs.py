@@ -1,6 +1,8 @@
 import time
 import requests
 from ground_core import GroundStation, FlaskApp
+from threading import Thread
+import random
 
 def system_msg_callback(msg):
     '''
@@ -16,8 +18,7 @@ def STC_msg_callback(msg : str):
     This callback will be triggered for the ScanTheCode mission
     """
     # msg format = $RXCOD,051124,213447,INSP,RBG*15
-    msg = (msg.split("*")[0])[-3]
-
+    msg = (msg.split("*")[0])[-3:]
     data = {
         'colors': msg,
     }
@@ -29,21 +30,26 @@ def startFlask():
     flaskApp = FlaskApp()
     flaskApp.run()
 
-if __name__ == "__main__":
-    flask_url = 'http://127.0.0.1:5000/update_colors'
-    startFlask()
-    time.sleep(2)
-    STC_msg_callback("RXCOD,051124,213447,INSP,RBG*15")
+# def dummy_send():
+#     while True:
+#         time.sleep(2)
+#         characters = ['R', 'B', 'G']
+#         random.shuffle(characters)
+#         color_string = ''.join(characters)
+#         STC_msg_callback(f"RXCOD,051124,213447,INSP,{color_string}*15")
 
 # if __name__ == "__main__":
+#     flask_url = 'http://127.0.0.1:5001/update_colors'
+#     flaskThread = Thread(target=dummy_send)
+#     flaskThread.start()
+#     startFlask()
 
-#     flaskApp = None
-#     flask_url = 'http://127.0.0.1:5000/update_colors'
+if __name__ == "__main__":
 
-#     gs = GroundStation("192.168.3.100", 5000, debug=True)
-#     gs.add_callback("RXHRB", system_msg_callback)
-#     gs.add_callback("RXCOD", STC_msg_callback)
+    flask_url = 'http://127.0.0.1:5001/update_colors'
 
-#     while True:
-#         time.sleep(1)
-#         pass
+    gs = GroundStation("robot.server", 12345, dummy=True)
+    gs.add_callback("RXHRB", system_msg_callback)
+    gs.add_callback("RXCOD", STC_msg_callback)
+
+    startFlask()

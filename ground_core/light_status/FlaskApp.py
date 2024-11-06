@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 from pathlib import Path
+import logging
 
 class FlaskApp:
     def __init__(self):
         self.app = Flask(__name__, template_folder=Path(__file__).parent)
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
         self.colors = ["#000000", "#000000", "#000000"]
         self.counter = 0
         self.frames = 0
@@ -49,8 +52,9 @@ class FlaskApp:
             return jsonify({"status": "error", "message": "Please provide a string of exactly 3 color codes."}), 400
 
 
-    def run(self, debug=True):
-        self.app.run(debug=debug)
+    def run(self, debug=False):
+        print("Access server at: http://127.0.0.1:5001")
+        self.app.run(debug=debug, host="0.0.0.0", port=5001)
 
 # To run the server
 # if __name__ == '__main__':
