@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
+from pathlib import Path
 
 class FlaskApp:
     def __init__(self):
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, template_folder=Path(__file__).parent)
         self.colors = ["#000000", "#000000", "#000000"]
         self.counter = 0
         self.frames = 0
