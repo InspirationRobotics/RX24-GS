@@ -4,7 +4,7 @@ from ground_core import SystemHeartbeat
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.settimeout(0.05)
-server_address = socket.gethostname() # "robot.server"
+server_address = "robot.server" # "robot.server"
 if client_socket.connect_ex((server_address, 12345)) != 0:
     client_socket.close()
     raise ConnectionRefusedError

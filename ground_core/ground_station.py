@@ -37,11 +37,9 @@ class GroundStation(Logger):
         if self.mission_heartbeat:
             if self.mission_heartbeat in msg:
                 self.mission_heartbeat = None
-                self.mi_flag = True
         if self.system_heartbeat:
             if self.system_heartbeat in msg:
                 self.system_heartbeat = None
-                self.sy_flag = True
 
     def add_callback(self, msg_id, callback):
         self.callback_list[msg_id] = callback
@@ -64,15 +62,15 @@ class GroundStation(Logger):
                     self.mission_heartbeat = str(MissionHeartbeat(["RXCOD", "RBG"]))
                     self.system_heartbeat = str(SystemHeartbeat((42.0, -71.0), "1"))
 
-                if self.system_heartbeat is not None and self.sy_flag:
+                if self.system_heartbeat is not None:
                     self.TD_client.send(self.system_heartbeat)
-                    self.sy_flag = False
+                    self.system_heartbeat = None
 
                 time.sleep(0.5)
 
-                if self.mission_heartbeat is not None and self.mi_flag:
+                if self.mission_heartbeat is not None:
                     self.TD_client.send(self.mission_heartbeat)
-                    self.mi_flag = False
+                    self.mission_heartbeat = None
 
             time.sleep(0.5)
 

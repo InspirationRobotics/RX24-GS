@@ -1,4 +1,7 @@
 import time
+import operator
+from functools import reduce
+
 
 class Heartbeat:
     def __init__(self, msg_id : str, team_id : str = "INSP"):
@@ -40,10 +43,11 @@ class Heartbeat:
             msg += f"{val},"
         # Remove the last comma
         msg = msg[:-1]
-        checksum = 0
-        for char in msg:
-            checksum ^= ord(char)
-        checksum = hex(checksum)[2:]
+        sum = hex(reduce((operator.xor), map(ord, msg), 0))[2:].upper()
+        if len(sum) == 2:
+            checksum = sum
+        else:
+            checksum = "0" + sum
         msg += f"*{checksum}\r\n"
         return f"${msg}"
 
