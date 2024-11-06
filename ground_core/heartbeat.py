@@ -78,5 +78,5 @@ class MissionHeartbeat(Heartbeat):
 if __name__ == "__main__":
     hb = SystemHeartbeat((42.0, -71.0), "1")
     print(hb)
-    hb2 = MissionHeartbeat(["RXCOD", "RBG"])
-    print(hb2)
+    # hb2 = MissionHeartbeat(["RXCOD", "RBG"])
+    # print(hb2)

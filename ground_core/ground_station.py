@@ -18,10 +18,12 @@ class GroundStation(Logger):
             self.boat_client = Client("192.168.3.2", callback=self._boat_callback)
             self.boat_client.start()
         if not debug:
-            self.TD_client = Client(TD_IP, port=TD_port)
+            self.TD_client = Client(TD_IP, port=TD_port, TD=True, callback=self.TD_callback)
 
         self.mission_heartbeat = None
         self.system_heartbeat = None
+        self.mi_flag = True
+        self.sy_flag = True
         self.callback_list = {}
 
         self.active = True
@@ -31,6 +33,15 @@ class GroundStation(Logger):
             self.TD_client.start()
             self.send_thread.start()
         
+    def TD_callback(self, msg : str, address : Tuple[str, int]):
+        if self.mission_heartbeat:
+            if self.mission_heartbeat in msg:
+                self.mission_heartbeat = None
+                self.mi_flag = True
+        if self.system_heartbeat:
+            if self.system_heartbeat in msg:
+                self.system_heartbeat = None
+                self.sy_flag = True
 
     def add_callback(self, msg_id, callback):
         self.callback_list[msg_id] = callback
@@ -53,14 +64,17 @@ class GroundStation(Logger):
                     self.mission_heartbeat = str(MissionHeartbeat(["RXCOD", "RBG"]))
                     self.system_heartbeat = str(SystemHeartbeat((42.0, -71.0), "1"))
 
-                if self.mission_heartbeat is not None:
-                    self.TD_client.send(self.mission_heartbeat)
-                    self.mission_heartbeat = None
-
-                if self.system_heartbeat is not None:
+                if self.system_heartbeat is not None and self.sy_flag:
                     self.TD_client.send(self.system_heartbeat)
-                    self.system_heartbeat = None
-            time.sleep(1)
+                    self.sy_flag = False
+
+                time.sleep(0.5)
+
+                if self.mission_heartbeat is not None and self.mi_flag:
+                    self.TD_client.send(self.mission_heartbeat)
+                    self.mi_flag = False
+
+            time.sleep(0.5)
 
     def _boat_callback(self, msg : str, address : Tuple[str, int]):
         data = csm.decode(msg)
